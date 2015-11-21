@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommandArguments>-z D:\AccessToken\dump_analysis\1_fuzz_breakpoint_too_much_2.dmp -c ".load tokenext.dll; !handles"</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand>windbg.exe</LocalDebuggerCommand>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommand>C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-z D:\AccessToken\dump_analysis\1_fuzz_breakpoint_too_much_2.dmp -c ".load tokenext.dll; "</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+</Project>
