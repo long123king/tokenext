@@ -3,8 +3,10 @@ A windbg extension, extracting token related contents
 
 Usage:
 
-1. compile this project to get a **tokenext.dll** file  
-2. move **tokenext.dll** to [WINDBG_DIR]/winext  
+1. compile this project to get a **tokenext.dll** file 
+
+2. move **tokenext.dll** to **[WINDBG_DIR]/winext**  
+ 
 3. in windbg, load this extention with command:  
 
         .load tokenext.dll;
