@@ -2,9 +2,10 @@
 A windbg extension, extracting token related contents
 
 Usage:
-1. compile this project to get a **tokenext.dll** file
-2. move **tokenext.dll** to [WINDBG_DIR]/winext
-3. in windbg, load this extention with command:
+
+1. compile this project to get a **tokenext.dll** file  
+2. move **tokenext.dll** to [WINDBG_DIR]/winext  
+3. in windbg, load this extention with command:  
 
         .load tokenext.dll;
 
@@ -12,10 +13,10 @@ Usage:
 
         !dk handles
 
-5. supported commands and options:
+5. supported commands and options:  
 
         !dk cmd [address] [options]
-commands:
+        commands:
                 pses - dump all active processes
                 gobj - dump all global object, same as WinObj
              handles - dump all open handles by a specific process
@@ -30,7 +31,7 @@ commands:
                  acl - dump a specific acl
                  sid - dump a specific sid
             sessions - dump all logon sessions
-options:
+        options:
                   /f - dump all related fields in detail
                  /po - dump related process object header
                  /to - dump related token object header
