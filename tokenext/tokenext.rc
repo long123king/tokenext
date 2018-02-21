@@ -30,13 +30,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Keen Team"
-            VALUE "FileDescription", "Token Windbg Extension"
+            VALUE "CompanyName", "Daniel King(@long123king)"
+            VALUE "FileDescription", "DK Windbg Extension"
             VALUE "FileVersion", "0.0.1.0"
-            VALUE "InternalName", "tokenext.dll"
-            VALUE "LegalCopyright", "Keen Team"
-            VALUE "OriginalFilename", "tokenext.dll"
-            VALUE "ProductName", "Token Windbg Extension"
+            VALUE "InternalName", "dk.dll"
+            VALUE "LegalCopyright", "Daniel King(@long123king)"
+            VALUE "OriginalFilename", "dk.dll"
+            VALUE "ProductName", "DK Windbg Extension"
             VALUE "ProductVersion", "0.0.1.0"
         END
     END
