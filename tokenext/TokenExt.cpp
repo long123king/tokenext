@@ -1025,7 +1025,8 @@ void CTokenExt::dk(void)
             else if (cmd == "sid")
             {
                 size_t sid_addr = getIntArg(args, 1, 0);
-                Out("Sid(0x%0I64x) : %s\n", sid_addr, dump_sid(sid_addr).c_str());
+                tuple<string, string> tupleSid = dump_sid(sid_addr);
+                Out("Sid(0x%0I64x) : %s [%s]\n", sid_addr, get<0>(tupleSid).c_str(), get<1>(tupleSid).c_str());
             }
             else if (cmd == "acl")
             {
@@ -1409,7 +1410,7 @@ void CTokenExt::dump_process(size_t process_addr)
 		size_t token_addr = ps.Field("Token.Object").GetUlong64();
 
 		size_t pico_context = ps.Field("PicoContext").GetUlongPtr();
-		size_t trustlet_id = ps.Field("TrustletIdentity").GetUlong64();
+	//	size_t trustlet_id = ps.Field("TrustletIdentity").GetUlong64();
 
 		uint32_t flags = ps.Field("Flags").GetUlong();
 		uint32_t flags2 = ps.Field("Flags2").GetUlong();
@@ -1444,11 +1445,15 @@ void CTokenExt::dump_process(size_t process_addr)
 
 		ss << "<link cmd=\"!dk handles " << process_addr << "\">handles</link> ";
 
+        ss << "<link cmd=\"!dk token " << (token_addr & 0xFFFFFFFFFFFFFFF0) << "\">token</link> ";
+
         ss << "<link cmd=\"!dk obj " << process_addr - 0x30 << "\">detail</link> ";
 
         ss << "<link cmd=\"!dk threads " << process_addr << "\">threads</link> ";
 
         ss << "<link cmd=\".process /i " << process_addr << "\">switch</link> ";
+
+        //ss << il_str << " " << il_str.length() << " ";
 
 
 		ss << setw(16) << name << " "
@@ -1463,8 +1468,8 @@ void CTokenExt::dump_process(size_t process_addr)
 		if (pico_context != 0)
 			ss << " Pico: " << pico_context << " ";
 
-		if (trustlet_id != 0)
-			ss << " Trustlet Id: " << trustlet_id << " ";
+		//if (trustlet_id != 0)
+		//	ss << " Trustlet Id: " << trustlet_id << " ";
 
 		if (b_minimal)
 			ss << " Minimal ";
@@ -1638,10 +1643,16 @@ void CTokenExt::dump_sdr(size_t sd_addr, string type_name)
             Out("[Security Descriptor:]\n");
             uint32_t owner_off = sdr.Field("Owner").GetUlong();
             if (owner_off != 0)
-                Out("--Owner: %s\n", dump_sid(sd_addr + owner_off).c_str());
+            {
+                auto tupleOwner = dump_sid(sd_addr + owner_off);
+                Out("--Owner: [%30s] %s\n", get<1>(tupleOwner).c_str(), get<0>(tupleOwner).c_str());
+            }
             uint32_t group_off = sdr.Field("Group").GetUlong();
             if (group_off != 0)
-                Out("--Group: %s\n", dump_sid(sd_addr + group_off).c_str());
+            {
+                auto tupleGroup = dump_sid(sd_addr + group_off);
+                Out("--Group: [%30s] %s\n", get<1>(tupleGroup).c_str(), get<0>(tupleGroup).c_str());
+            }
             uint32_t sacl_off = sdr.Field("Sacl").GetUlong();
             if (sacl_off != 0)
                 Out("--Sacl:\n%s\n", dump_acl(sd_addr + sacl_off, type_name).c_str());
@@ -1657,10 +1668,16 @@ void CTokenExt::dump_sdr(size_t sd_addr, string type_name)
             Out("[Security Descriptor:]\n");
             uint32_t owner_off = sdr.Field("Owner").GetUlong();
             if (owner_off != 0)
-                Out("--Owner: %s\n", dump_sid(owner_off).c_str());
+            {
+                auto tupleOwner = dump_sid(sd_addr + owner_off);
+                Out("--Owner: [%30s] %s\n", get<1>(tupleOwner).c_str(), get<0>(tupleOwner).c_str());
+            }
             uint32_t group_off = sdr.Field("Group").GetUlong();
             if (group_off != 0)
-                Out("--Group: %s\n", dump_sid(group_off).c_str());
+            {
+                auto tupleGroup = dump_sid(sd_addr + group_off);
+                Out("--Group: [%30s] %s\n", get<1>(tupleGroup).c_str(), get<0>(tupleGroup).c_str());
+            }
             uint32_t sacl_off = sdr.Field("Sacl").GetUlong();
             if (sacl_off != 0)
                 Out("--Sacl:\n%s\n", dump_acl(sacl_off).c_str());
@@ -1756,8 +1773,9 @@ void CTokenExt::dump_token(size_t token_addr)
         Out("%16s: \n%s\n", "SidHash", dump_sid_attr_hash(token_addr + token.GetFieldOffset("SidHash")).c_str());
         Out("%16s: \n%s\n", "RestrictedSidHash", dump_sid_attr_hash(token_addr + token.GetFieldOffset("RestrictedSidHash")).c_str());
         Out("%16s: \n%s\n", "CapabilitiesHash", dump_sid_attr_hash(token_addr + token.GetFieldOffset("CapabilitiesHash")).c_str());
-        string trust_level = dump_sid(token.Field("TrustLevelSid").GetUlongPtr());
-        Out("%16s: %s [%s]\n", "TrustLevelSid", trust_level.c_str(), getTrustLabel(trust_level).c_str());
+        //string trust_level = dump_sid(token.Field("TrustLevelSid").GetUlongPtr());
+        auto tupleTil = dump_sid(token.Field("TrustLevelSid").GetUlongPtr());
+        Out("%16s: %s [%s]\n", "TrustLevelSid", get<0>(tupleTil).c_str(), get<1>(tupleTil).c_str());
 
         //dump_session(token.Field("LogonSession").GetLongPtr());
 
@@ -2597,16 +2615,19 @@ string CTokenExt::dump_acl(size_t acl_addr, string type_name)
             uint32_t mask = read<uint32_t>(entry_addr + 4);
             uint16_t size = read<uint16_t>(entry_addr + 2);
             size_t sid_addr = entry_addr + 8;
-            string sid_str = dump_sid(sid_addr);
-			ss << hex << setw(2) << setfill('0') << uint32_t(type) << " " << setw(20) << setfill(' ') << getAceTypeStr(type) << " "
-                << hex << setw(4) << setfill('0') << mask << " " << setw(50) << setfill(' ')
-                << sid_str << "\t\t"
-				<< getAceMaskStr(mask, type_name) << " ";
-            if (type == 0x11)
-                ss << " [" << getIntegrityLevel(sid_str) << "]";
-            else if (type == 0x14)
-                ss << " [" << getTrustLabel(sid_str) << "]";
-            ss << "\n";
+            auto tupleSid = dump_sid(sid_addr);
+            ss << hex << setw(2) << setfill('0') << uint32_t(type) << " " << setw(20) << setfill(' ') << getAceTypeStr(type) << " "
+                << hex << setw(4) << setfill('0') << mask << " "
+                << " [" << setw(30) << setfill(' ') << get<1>(tupleSid) << "] "
+                << get<0>(tupleSid) << "\n"
+                << string(30, ' ') << "----> "
+                << getAceMaskStr(mask, type_name) << " "                
+                << "\n";
+            //if (type == 0x11)
+            //    ss << " [" << getIntegrityLevel(sid_str) << "]";
+            //else if (type == 0x14)
+            //    ss << " [" << getTrustLabel(sid_str) << "]";
+            //ss << "\n";
 			
             entry_addr += size;
         }
@@ -2641,7 +2662,7 @@ string CTokenExt::dump_privileges_by_bitmap(size_t bitmap)
     {
         if (bitmap & (1 << i))
         {
-            ss << "0x" << hex << setw(2) << setfill('0') << i << " " << privilege_bit_to_text(i) << "\n";
+            ss << "\t\t\t\t[ 0x" << hex << setw(2) << setfill('0') << i << " ]\t\t" << privilege_bit_to_text(i) << "\n";
         }
     }
     return ss.str();
@@ -2927,15 +2948,17 @@ string CTokenExt::getTokenIL(size_t token_addr)
         ExtRemoteTyped token("(nt!_TOKEN*)@$extin", token_addr);
         size_t il_sid_addr = token.Field("IntegrityLevelSidValue").GetUlongPtr();
         if (il_sid_addr != 0)
-            return getIntegrityLevel(dump_sid(il_sid_addr));
+            return get<1>(dump_sid(il_sid_addr));
 
         size_t il_index = token.Field("IntegrityLevelIndex").GetUlong();
-        string il_str = get_sid_attr_hash_item(token_addr + token.GetFieldOffset("SidHash"), il_index);
-        return getIntegrityLevel(il_str);
+        size_t il_addr = get_sid_attr_hash_item(token_addr + token.GetFieldOffset("SidHash"), il_index);
+
+        auto tupleIl = dump_sid(il_addr);
+        return get<1>(tupleIl);
     }
     FILTER_CATCH;
 
-    return "";
+    return "[Error IL]";
 }
 
 bool CTokenExt::valid_addr(size_t addr)
@@ -3332,10 +3355,10 @@ void CTokenExt::dump_trap_frame(size_t thread_addr)
     FILTER_CATCH;
 }
 
-string CTokenExt::dump_sid(size_t sid_addr)
+tuple<string, string> CTokenExt::dump_sid(size_t sid_addr)
 {
     if (sid_addr == 0)
-        return "";
+        return make_tuple("", "");
     try
     {
         uint8_t version = read<uint8_t>(sid_addr);
@@ -3358,14 +3381,19 @@ string CTokenExt::dump_sid(size_t sid_addr)
                     ss << "-";
             }
         }   
-        string comment = getWellKnownAccount(ss.str());
-        if (!comment.empty())
-            ss << " [" << comment << "]";
-        return ss.str();
+        string sid_str(ss.str());
+        ss.str("");
+        string comment = getWellKnownAccount(sid_str.c_str());
+        //if (!comment.empty())
+        //    ss << setw(50) << sid_str << " [" << comment << "]";
+        //else
+        //    ss << setw(50) << sid_str;
+        
+        return make_tuple(sid_str, comment);
     }
     FILTER_CATCH;
 
-    return "";
+    return make_tuple("", "");
 }
 
 string CTokenExt::dump_guid(size_t addr)
@@ -3404,21 +3432,26 @@ string CTokenExt::dump_sid_attr_array(size_t sid_addr, size_t count)
     stringstream ss;
     try
     {
+        if (sid_addr == 0)
+            return "";
+
         for (size_t i = 0; i < count; i++)
         {
             ExtRemoteTyped entry("(nt!_SID_AND_ATTRIBUTES*)@$extin", sid_addr + i * 0x10);
             ss << showbase << hex << setw(16) << sid_addr + i * 0x10 << " ";
-            ss << showbase << hex << setw(16) << entry.Field("Attributes").GetUlong() << " [" << getGroupsAttrText(entry.Field("Attributes").GetUlong(), true) << "] ";
-            ss << dump_sid(entry.Field("Sid").GetLongPtr()).c_str() << "\n";              
+            ss << showbase << hex << setw(16) << entry.Field("Attributes").GetUlong() << " [" << setw(45) << getGroupsAttrText(entry.Field("Attributes").GetUlong(), true) << "] ";
+            
+            auto tupleSid = dump_sid(entry.Field("Sid").GetLongPtr());
+            ss << "[" << setw(30) << get<1>(tupleSid) << "] " << get<0>(tupleSid) << "\n";              
         }
     }
     FILTER_CATCH;
     return ss.str();
 }
 
-string CTokenExt::get_sid_attr_array_item(size_t sid_addr, size_t count, size_t index)
+size_t CTokenExt::get_sid_attr_array_item(size_t sid_addr, size_t count, size_t index)
 {
-    stringstream ss;
+    //stringstream ss;
     try
     {
         for (size_t i = 0; i < count; i++)
@@ -3426,11 +3459,12 @@ string CTokenExt::get_sid_attr_array_item(size_t sid_addr, size_t count, size_t 
             if (i != index)
                 continue;
             ExtRemoteTyped entry("(nt!_SID_AND_ATTRIBUTES*)@$extin", sid_addr + i * 0x10);
-            ss << dump_sid(entry.Field("Sid").GetLongPtr()).c_str();
+            return entry.Field("Sid").GetLongPtr();
+            //ss << setw(50) << get<0>(tupleSid) << " [" << get<1>(tupleSid) << "] ";
         }
     }
     FILTER_CATCH;
-    return ss.str();
+    return 0;// ss.str();
 }
 
 string CTokenExt::dump_sid_attr_hash(size_t addr)
@@ -3441,30 +3475,30 @@ string CTokenExt::dump_sid_attr_hash(size_t addr)
     {
         ExtRemoteTyped hash("(nt!_SID_AND_ATTRIBUTES_HASH*)@$extin", addr);
         ss << dump_sid_attr_array(hash.Field("SidAttr").GetLongPtr(), hash.Field("SidCount").GetUlong()) << "\n";
-        for (size_t i = 0; i < 0x20; i++)
-        {
-            if (i % 0x08 == 0)
-                ss << "\n";
-            ss << showbase << hex << setw(16) << read<size_t>(addr + hash.GetFieldOffset("Hash") + i * 0x08) << " ";             
-        }
+        //for (size_t i = 0; i < 0x20; i++)
+        //{
+        //    if (i % 0x08 == 0)
+        //        ss << "\n";
+        //    ss << showbase << hex << setw(16) << read<size_t>(addr + hash.GetFieldOffset("Hash") + i * 0x08) << " ";             
+        //}
     }
     FILTER_CATCH;
 
     return ss.str();
 }
 
-string CTokenExt::get_sid_attr_hash_item(size_t addr, size_t index)
+size_t CTokenExt::get_sid_attr_hash_item(size_t addr, size_t index)
 {
-    stringstream ss;
+    //stringstream ss;
 
     try
     {
         ExtRemoteTyped hash("(nt!_SID_AND_ATTRIBUTES_HASH*)@$extin", addr);
-        ss << get_sid_attr_array_item(hash.Field("SidAttr").GetLongPtr(), hash.Field("SidCount").GetUlong(), index);
+        return get_sid_attr_array_item(hash.Field("SidAttr").GetLongPtr(), hash.Field("SidCount").GetUlong(), index);
     }
     FILTER_CATCH;
 
-    return ss.str();
+    return 0;
 }
 
 bool CTokenExt::check()

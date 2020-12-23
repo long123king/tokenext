@@ -733,17 +733,17 @@ public:
 
     string dump_luid(size_t addr);
 
-    string dump_sid(size_t sid_addr);
+    tuple<string, string> dump_sid(size_t sid_addr);
 
     string dump_guid(size_t addr);
 
     string dump_sid_attr_array(size_t sid_addr, size_t count);
 
-    string get_sid_attr_array_item(size_t sid_addr, size_t count, size_t index);
+    size_t get_sid_attr_array_item(size_t sid_addr, size_t count, size_t index);
 
     string dump_sid_attr_hash(size_t addr);
 
-    string get_sid_attr_hash_item(size_t addr, size_t index);
+    size_t get_sid_attr_hash_item(size_t addr, size_t index);
 
     string dump_acl(size_t acl_addr, string type_name = "File");
 
@@ -859,7 +859,7 @@ public:
         if (it != s_integrity_level_texts.end())
             return it->second;
 
-        return "";
+        return sidText;
     }
 
     static
@@ -1339,6 +1339,16 @@ public:
         if (it != s_wellknown_sids.end())
             return it->second;
 
+		auto it1 = s_integrity_level_texts.find(sidText.c_str());
+
+		if (it1 != s_integrity_level_texts.end())
+			return it1->second;
+
+		auto it2 = s_trust_label_texts.find(sidText.c_str());
+
+		if (it2 != s_trust_label_texts.end())
+			return it2->second;
+
         if (sidText.find("S-1-5-5-") == 0 && sidText.rfind("-") > 7)
             return "Logon Session";
 
@@ -1347,6 +1357,24 @@ public:
 
         if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-501") == sidText.length() - 4)
             return "Guest";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-512") == sidText.length() - 4)
+			return "Domain Admins";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-512") == sidText.length() - 4)
+			return "Domain Admins";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-513") == sidText.length() - 4)
+			return "Domain Users";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-514") == sidText.length() - 4)
+			return "Domain Guests";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-515") == sidText.length() - 4)
+			return "Domain Computers";
+
+		if (sidText.find("S-1-5-21") == 0 && sidText.rfind("-516") == sidText.length() - 4)
+			return "Domain Controllers";
 
         return "";
     }
@@ -1507,13 +1535,38 @@ const map<const char*, const char*, cmp_str> CTokenExt::s_trust_label_texts{ {
     } };
 
 const map<const char*, const char*, cmp_str> CTokenExt::s_wellknown_sids{ {
-    { "S-1-1-0",          "Everyone" },
-    { "S-1-2-0",          "Local" },
-    { "S-1-2-1",          "Console Logon" },
-    { "S-1-5-18",         "Local System" },
-    { "S-1-5-32-544",     "BUILTIN/Administrators" },
-    { "S-1-5-32-545",     "BUILTIN/Users" },
-    { "S-1-5-32-546",     "BUILTIN/Guests" },
-    { "S-1-5-32-555",     "BUILTIN/\\Remote Desktop Users" },
-    { "S-1-5-32-578",     "BUILTIN/\\Hyper-V Administrators" }
-    } };
+	{ "S-1-0",				"Null"},
+	{ "S-1-1-0",			"Everyone" },
+    { "S-1-2-0",			"Local" },
+    { "S-1-2-1",			"Console Logon" },
+	{ "S-1-3",				"Creator Authority"},
+	{ "S-1-3-0",			"Creator Owner"},
+	{ "S-1-3-1",			"Creator Group"},
+	{ "S-1-3-4",			"Owner Rights"},
+	{ "S-1-5-2",			"Network"},
+	{ "S-1-5-4",			"Interactive"},
+	{ "S-1-5-6",			"Service"},
+	{ "S-1-5-7",			"Anonymous"},
+	{ "S-1-5-9",			"Enterprise Domain Controllers"},
+	{ "S-1-5-10",			"Principal Self"},
+	{ "S-1-5-11",			"Authenticated Users"},
+	{ "S-1-5-12",			"Restricted Code"},
+	{ "S-1-5-13",			"Terminal Server Users"},
+	{ "S-1-5-14",			"Remote Interactive Logon"},
+	{ "S-1-5-15",			"This Organization"},
+	{ "S-1-5-17",			"IUSR"},			
+    { "S-1-5-18",           "Local System" },
+	{ "S-1-5-19",			"NT Authority/Local Service"},
+	{ "S-1-5-20",			"NT Authority/Network Service"},
+	{ "S-1-5-32-544",		"BUILTIN/Administrators" },
+    { "S-1-5-32-545",		"BUILTIN/Users" },
+    { "S-1-5-32-546",		"BUILTIN/Guests" },
+    { "S-1-5-32-555",		"BUILTIN/Remote Desktop Users" },
+	{ "S-1-5-32-559",		"BUILTIN/Performance Log Users"},
+	{ "S-1-5-32-558",		"BUILTIN/Performance Monitor Users"},
+	{ "S-1-5-32-578",		"BUILTIN/Hyper-V Administrators" },
+	{ "S-1-5-80-0",			"All Services"},
+	{ "S-1-5-113",			"Local Account"},
+	{ "S-1-5-114",			"Local Account&Member of Admins Group"},
+	{ "S-1-5-64-10",		"NTLM Authentication"},
+} };
